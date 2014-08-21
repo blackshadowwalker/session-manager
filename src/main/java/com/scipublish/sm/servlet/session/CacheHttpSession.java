@@ -446,7 +446,7 @@ public class CacheHttpSession implements HttpSession {
             //新键需要同步缓存
             update = true;
         } else {
-            
+
             LOGGER.debug(
                     "{} exists in the cache specified in the session container to update the attribute (isNew = false).",
                     sessionCacheKeyHeader);

@@ -11,6 +11,8 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionListener;
 
+import com.scipublish.sm.cache.CacheEngine;
+import com.scipublish.sm.servlet.listener.cache.CacheEngineLoadListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +49,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
     private HttpServletResponse response;
     private HttpSessionAttributeListener[] sessionAttributeListeners;
     private HttpSessionListener[] sessionListeners;
+    private CacheEngine cache;
 
     /**
      * 构造一个HttpServletRequest的包装器。
@@ -61,6 +64,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
         super(request);
         this.context = context;
         this.response = response;
+        this.cache = (CacheEngine) context.getAttribute(CacheEngineLoadListener.CACHE_USE_HOST_DOMAIN_KEY);
     }
 
     /**
@@ -275,8 +279,13 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
      */
     private CacheHttpSession buildCacheHttpSession(boolean create) {
         if (create) {
+            // 需判断是否已存在，存在则重新创建
+            String sessionId = IdGenerate.getUUIDString();
+            while (cache.containsKey(sessionId)) {
+                sessionId = IdGenerate.getUUIDString();
+            }
             CacheHttpSession session = buildCacheHttpSession(
-                    IdGenerate.getUUIDString(),
+                    sessionId,
                     true);
             LOGGER.debug("Build new session[{}].", session.getId());
             return session;

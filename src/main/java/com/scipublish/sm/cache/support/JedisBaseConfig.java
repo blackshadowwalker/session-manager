@@ -1,5 +1,7 @@
 package com.scipublish.sm.cache.support;
 
+import java.util.Set;
+
 /**
  * jedis基础配置
  * @author chenboxiang
@@ -13,6 +15,8 @@ public class JedisBaseConfig {
     private int database;
 	private String password;
 	private int timeout;
+    private String masterName;
+    private Set<String> sentinels;
 	
 	/**
 	 * get {@link #host}
@@ -79,4 +83,20 @@ public class JedisBaseConfig {
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
 	}
+
+    public String getMasterName() {
+        return masterName;
+    }
+
+    public void setMasterName(String masterName) {
+        this.masterName = masterName;
+    }
+
+    public Set<String> getSentinels() {
+        return sentinels;
+    }
+
+    public void setSentinels(Set<String> sentinels) {
+        this.sentinels = sentinels;
+    }
 }

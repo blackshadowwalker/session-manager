@@ -5,26 +5,20 @@
 package com.scipublish.sm.cache.support;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.Protocol;
+import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisException;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.scipublish.sm.cache.AbstractCacheEngine;
 import com.scipublish.sm.cache.CacheEngine;
+import redis.clients.util.Pool;
 
 /**
  * 基于redis的cache实现
@@ -38,15 +32,15 @@ public class RedisCacheEngine extends AbstractCacheEngine {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RedisCacheEngine.class);
 	private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 	
-	protected JedisPool jedisPool;
+	protected Pool<Jedis> jedisPool;
 	protected String DEFAULT_HOST = "localhost";
 	protected int DEFAULT_PORT = 6379;
     protected int DEFAULT_DATABASE = 0;
 	protected String DEFAULT_PASSWORD = null;
 	protected int DEFAULT_TIMEOUT = Protocol.DEFAULT_TIMEOUT;
-	protected int DEFAULT_MAX_ACTIVE = 200;
+	protected int DEFAULT_MAX_TOTAL = 200;
 	protected int DEFAULT_MAX_IDLE = 100;
-	protected int DEFAULT_MIN_IDLE = 50;
+	protected int DEFAULT_MIN_IDLE = 5;
 	protected int DEFAULT_MAX_WAIT = 10000;
 	protected boolean DEFAULT_TEST_ON_BORROW = false;
 	protected boolean DEFAULT_TEST_ON_RETURN = false;
@@ -63,10 +57,10 @@ public class RedisCacheEngine extends AbstractCacheEngine {
 		baseConfig.setTimeout(DEFAULT_TIMEOUT);
 
 		JedisPoolConfig config = new JedisPoolConfig();
-		config.setMaxActive(DEFAULT_MAX_ACTIVE);
+        config.setMaxTotal(DEFAULT_MAX_TOTAL);
 		config.setMaxIdle(DEFAULT_MAX_IDLE);
 		config.setMinIdle(DEFAULT_MIN_IDLE);
-		config.setMaxWait(DEFAULT_MAX_WAIT);
+        config.setMaxWaitMillis(DEFAULT_MAX_WAIT);
 		config.setTestOnBorrow(DEFAULT_TEST_ON_BORROW);
 		config.setTestOnReturn(DEFAULT_TEST_ON_RETURN);
 		
@@ -76,15 +70,28 @@ public class RedisCacheEngine extends AbstractCacheEngine {
 			// set base config
 			for (String name : propMap.keySet()) {
 				try {
-					String value = propMap.get(name);
-					BeanUtils.setProperty(baseConfig, name, value);
-					BeanUtils.setProperty(config, name, value);
+                    String value = propMap.get(name);
+                    if (!name.equals("sentinels")) {
+                        BeanUtils.setProperty(baseConfig, name, value);
+                        BeanUtils.setProperty(config, name, value);
+                    } else {
+                        if (value.endsWith(";")) {
+                            value = value.substring(0, value.length() - 1);
+                        }
+                        baseConfig.setSentinels(new HashSet<String>(Arrays.asList(value.split(";"))));
+                    }
 				} catch (Exception e) {
 					LOGGER.error(e.getMessage(), e);
 				}
 			}
 		}
-		jedisPool = new JedisPool(config, baseConfig.getHost(), baseConfig.getPort(), baseConfig.getTimeout(), baseConfig.getPassword(), baseConfig.getDatabase());
+
+        if (null != baseConfig.getSentinels() && baseConfig.getSentinels().size() > 0) {
+            jedisPool = new JedisSentinelPool(baseConfig.getMasterName(), baseConfig.getSentinels(), config, baseConfig.getTimeout(), baseConfig.getPassword(), baseConfig.getDatabase());
+
+        } else {
+            jedisPool = new JedisPool(config, baseConfig.getHost(), baseConfig.getPort(), baseConfig.getTimeout(), baseConfig.getPassword(), baseConfig.getDatabase());
+        }
 		try {
 			Jedis jedis = jedisPool.getResource();
 			jedisPool.returnResource(jedis);
@@ -93,9 +100,7 @@ public class RedisCacheEngine extends AbstractCacheEngine {
 			LOGGER.error("Jedis can not connect to the redis server!");
 			throw e;
 		}
-		LOGGER.info("jedis pool init with config: host:{}, port:{}, database:{}, timeout:{}, password:{}, maxActive:{}, maxIdle:{}, minIdle:{}, maxWait:{}, testOnBorrow:{}, testOnReturn:{}",
-				new Object[]{baseConfig.getHost(), baseConfig.getPort(), baseConfig.getDatabase(), baseConfig.getTimeout(), baseConfig.getPassword(), config.getMaxActive(),
-				config.getMaxIdle(), config.getMinIdle(), config.getMaxWait(), config.isTestOnBorrow(), config.isTestOnReturn()});
+		LOGGER.info("jedis pool init with config: {}", properties);
 		
 		LOGGER.info("redisCacheEngine init end");
 	}
@@ -274,7 +279,7 @@ public class RedisCacheEngine extends AbstractCacheEngine {
     	System.out.println(cacheEngine.get("string"));
     	System.out.println(cacheEngine.get("long"));
     	System.out.println(cacheEngine.get("int"));
-    	
+
     	List<Long> cacheList = new ArrayList<Long>();
     	for (int i = 0; i < 100; i++) {
     		cacheList.add(Long.valueOf(i));
