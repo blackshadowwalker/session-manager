@@ -5,8 +5,9 @@ keywords: session manager; redis session manager; redis session;
 
 # 1. config listener
 
-     set JedisPool and cacheEngine, new customer CacheListener extends CacheEngineLoadListener:
+   set JedisPool and cacheEngine, new customer CacheListener extends CacheEngineLoadListener:
 
+CacheEngineLoadListener.java
 ````java
 public class CacheListener extends CacheEngineLoadListener {
     private static Log log = LogFactory.getLog(CacheListener.class);
@@ -31,8 +32,8 @@ public class CacheListener extends CacheEngineLoadListener {
 
 # 2. config web.xml (CacheListener & CacheSessionFilter)
 
-| Parameter | Required | type | Default value | description |
-|-----------|----------|---------------|-------------|
+|Parameter|Required|type|Default value|description|
+|----|----|----|----|----|
 |maxInactiveInterval | false | int | 28800 | session expired time in second |
 |cookieDomain      | false | string | sub domain| set cookie domain |
 |tldEnable         | false | boolean| false     | set cookie use top level domain |
@@ -42,7 +43,6 @@ public class CacheListener extends CacheEngineLoadListener {
 |sessionAttributeListeners | false | string | null    | javax.servlet.http.HttpSessionListeners name, split with comma|
 
 config web.xml
-
 ````xml
 <listener>
     <listener-class>com.ezhe.www.listener.CacheListener</listener-class>
@@ -78,5 +78,6 @@ config web.xml
 
 ````
 
+session-manager.png 
 
 ![session-manager](doc/session-manager.png)
