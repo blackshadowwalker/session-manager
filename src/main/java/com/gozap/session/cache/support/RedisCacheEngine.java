@@ -104,6 +104,19 @@ public class RedisCacheEngine extends AbstractCacheEngine {
     }
 
     @Override
+    public void del(String key) {
+        checkInit();
+        checkKey(key);
+        Jedis jedis = null;
+        jedis = jedisPool.getResource();
+        Long ret = 0L;
+        do {
+            ret += jedis.del(key);
+        }while(jedis.exists(key));
+        jedis.close();
+    }
+
+    @Override
     public Object get(String key) {
         checkInit();
         checkKey(key);

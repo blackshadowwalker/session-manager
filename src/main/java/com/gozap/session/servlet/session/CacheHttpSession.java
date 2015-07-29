@@ -75,8 +75,8 @@ public class CacheHttpSession implements HttpSession {
         this.id = id;
         this.cache = (CacheEngine) servletContext.getAttribute(CacheEngineLoadListener.CACHE_USE_HOST_DOMAIN_KEY);
         this.context = servletContext;
-        sessionCacheKeyHeader = this.sessionCacheKeyPrefix + this.id + ".hd";
-        sessionCacheKeyAttribute = this.sessionCacheKeyPrefix + this.id + ".attr";
+        sessionCacheKeyHeader = this.sessionCacheKeyPrefix + "-" + this.id + ".hd";
+        sessionCacheKeyAttribute = this.sessionCacheKeyPrefix + "-" + this.id + ".attr";
     }
 
     /**
@@ -234,6 +234,8 @@ public class CacheHttpSession implements HttpSession {
     public void invalidate() {
         LOGGER.debug("invalidate Session {"+id+"}.");
         doHttpSessionListener(AccessType.REMOVE_ATTRIBUTE);
+        cache.del(this.sessionCacheKeyHeader);
+        cache.del(this.sessionCacheKeyAttribute);
         invalid = true;
     }
 
@@ -257,7 +259,6 @@ public class CacheHttpSession implements HttpSession {
 
                 LOGGER.debug("Session {"+id+"}, last access time {"+lastAccessTime+"}, {"+now+"} the current time. valid status: [{"+!invalid+"}].");
             }
-
             return invalid;
         }
     }
@@ -398,25 +399,17 @@ public class CacheHttpSession implements HttpSession {
     public boolean synchronizationCache() {
         if (invalid) {
             removeRemoteSessionForCache();
-
             LOGGER.debug("Session [{"+id+"}] has failed and empty the cache.");
-
             return false;
         } else {
             //头信息每次都需要同步
             updateCacheSessionHeader(sessionHeader);
-
             //属性键值对只有当改变时才更新。
             if (update) {
                 updateCacheSessionAttribute(sessionAttribute);
-
-                LOGGER.debug(
-                        "Session[{" + id + "}] information to the cache synchronization."
-                );
+                LOGGER.debug("Session[{" + id + "}] information to the cache synchronization.");
             }
-
             update = false;
-
             return true;
         }
     }
@@ -429,25 +422,17 @@ public class CacheHttpSession implements HttpSession {
      */
     public void init() {
         if (!cache.containsKey(sessionCacheKeyHeader)) {
-
-            LOGGER.debug(
-                    "Cache {"+sessionCacheKeyHeader+"} does not exist in the specified session container, so a creation."
-                    );
-
+            LOGGER.debug("Cache {"+sessionCacheKeyHeader+"} does not exist in the specified session container, so a creation.");
             initCacheSessionHeader(true);
             //新键需要同步缓存
             update = true;
         } else {
-
-            LOGGER.debug(
-                    "{"+sessionCacheKeyHeader+"} exists in the cache specified in the session container to update the attribute (isNew = false)."
-                    );
+            LOGGER.debug("{"+sessionCacheKeyHeader+"} exists in the cache specified in the session container to update the attribute (isNew = false).");
             sessionHeader = findCacheSessionHeader();
             sessionHeader.setNewbuild(false);
             //不需要同步缓存,除非有属性更新。
             update = false;
         }
-
         doHttpSessionListener(AccessType.SET_ATTRIBUTE);
     }
 

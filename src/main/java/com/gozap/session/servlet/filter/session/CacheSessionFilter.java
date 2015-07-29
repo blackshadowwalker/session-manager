@@ -1,6 +1,7 @@
 package com.gozap.session.servlet.filter.session;
 
 import java.io.IOException;
+import java.net.URL;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -41,8 +42,19 @@ import com.gozap.session.servlet.wrapper.CacheSessionHttpServletRequest;
 public class CacheSessionFilter extends BaseFilter {
 	private static final Log LOGGER = LogFactory.getLog(CacheSessionFilter.class);
 
+    public static final String COOKIE_SESSION_ID_NAME = "cookieSessionIdName";
+    public static final String SESSION_CACHE_KEY_PREFIX = "sessionCacheKeyPrefix";
+    public static final String MAX_INACTIVE_INTERVAL = "maxInactiveInterval";
+    public static final String COOKIE_DOMAIN = "cookieDomain";
+    public static final String COOKIE_CONTEXT_PATH = "cookieContextPath";
+    public static final String TOP_LEVEL_DOMAIN_ENABLE = "tldEnable";
+
+    public static String DEFAULT_SESSION_ID_NAME = "SESSIONID";
+    public static String DEFAULT_SESSION_CACHE_KEY_PREFIX = "session";
+
     private String sessionCookieName = null;
     private String cookieDomain = null;
+    private boolean tldEnable = false; // use top level domain for cookie
     private String cookieContextPath = null;
     /**
      * session过期时间, 单位为秒
@@ -114,6 +126,7 @@ public class CacheSessionFilter extends BaseFilter {
         cacheRequest.setSessionCacheKeyPrefix(sessionCacheKeyPrefix);
         cacheRequest.setSessionAttributeListeners(sessionAttributeListeners);
         cacheRequest.setSessionListeners(sessionListeners);
+        cacheRequest.setTldEnable(tldEnable);
 
         chain.doFilter(cacheRequest, httpResponse);
 
@@ -127,6 +140,7 @@ public class CacheSessionFilter extends BaseFilter {
                         httpResponse,
                         sessionCookieName,
                         cookieDomain,
+                        tldEnable,
                         cookieContextPath);
             }
         }
@@ -138,27 +152,25 @@ public class CacheSessionFilter extends BaseFilter {
     private void initParameters()
             throws ClassNotFoundException, InstantiationException,
             IllegalAccessException {
-        String sessionCookieNameParameter = "sessionCookieName";
-        String maxInactiveIntervalParameter = "maxInactiveInterval";
-        String cookieDomainParameter = "cookieDomain";
-        String cookieContextPathParameter = "cookieContextPath";
+        String temp = filterConfig.getInitParameter(COOKIE_SESSION_ID_NAME);
+        sessionCookieName = (temp == null) ? DEFAULT_SESSION_ID_NAME : temp;
 
-        String temp = filterConfig.getInitParameter(sessionCookieNameParameter);
-        sessionCookieName = (temp == null) ? "SESSIONID" : temp;
-
-        temp = filterConfig.getInitParameter(maxInactiveIntervalParameter);
+        temp = filterConfig.getInitParameter(MAX_INACTIVE_INTERVAL);
         if (null != temp) {
         	maxInactiveInterval = Integer.valueOf(temp);
         }
 
-        temp = filterConfig.getInitParameter(cookieDomainParameter);
+        temp = filterConfig.getInitParameter(COOKIE_DOMAIN);
         cookieDomain = temp;
 
-        temp = filterConfig.getInitParameter(cookieContextPathParameter);
+        temp = filterConfig.getInitParameter(COOKIE_CONTEXT_PATH);
         cookieContextPath = (temp == null) ? "/" : temp;
 
-        temp = filterConfig.getInitParameter("sessionCacheKeyPrefix");
-        sessionCacheKeyPrefix = (temp == null) ? "s." : temp;
+        temp = filterConfig.getInitParameter(SESSION_CACHE_KEY_PREFIX);
+        sessionCacheKeyPrefix = (temp == null) ? DEFAULT_SESSION_CACHE_KEY_PREFIX : temp;
+
+        temp = filterConfig.getInitParameter(TOP_LEVEL_DOMAIN_ENABLE);
+        tldEnable = (temp!=null && temp.trim().equalsIgnoreCase("true"))? true : false;
 
         LOGGER.info("CacheSessionFilter (sessionCookieName={"+sessionCookieName+"}, maxInactiveInterval={"+maxInactiveInterval+"}, " +
                         "cookieDomain={"+cookieDomain+"}, sessionCacheKeyPrefix={"+sessionCacheKeyPrefix+"})");
@@ -182,41 +194,27 @@ public class CacheSessionFilter extends BaseFilter {
         String[] listenerClasses;
 
         //初始化HttpSessionAttributeListener监听器列表
-        String listenerStr =
-                filterConfig.getInitParameter(sessionAttributeListenersParamName);
+        String listenerStr = filterConfig.getInitParameter(sessionAttributeListenersParamName);
         if (listenerStr != null && !listenerStr.isEmpty()) {
-
             listenerClasses = listenerStr.split(separator);
-
-            sessionAttributeListeners =
-                    new HttpSessionAttributeListener[listenerClasses.length];
-
+            sessionAttributeListeners = new HttpSessionAttributeListener[listenerClasses.length];
             for (int count = 0; count < sessionAttributeListeners.length; count++) {
-
                 sessionAttributeListeners[count] =
                         (HttpSessionAttributeListener) Class.forName(
                         listenerClasses[count]).newInstance();
-
                 LOGGER.info("Instantiated HttpSessionAttributeListener listener instance. [Classname = {"+listenerClasses[count]+"}]");
             }
         }
 
         //初始化HttpSessionListener监听器列表
-        listenerStr =
-                filterConfig.getInitParameter(sessionListenersParamName);
-
+        listenerStr = filterConfig.getInitParameter(sessionListenersParamName);
         if (listenerStr != null && !listenerStr.isEmpty()) {
-
             listenerClasses = listenerStr.split(separator);
-
-            sessionListeners =
-                    new HttpSessionListener[listenerClasses.length];
-
+            sessionListeners = new HttpSessionListener[listenerClasses.length];
             for (int count = 0; count < sessionListeners.length; count++) {
                 sessionListeners[count] =
                         (HttpSessionListener) Class.forName(
                         listenerClasses[count]).newInstance();
-
                 LOGGER.info("Instantiated HttpSessionListener listener instance. [Classname = {"+listenerClasses[count]+"}]");
             }
         }

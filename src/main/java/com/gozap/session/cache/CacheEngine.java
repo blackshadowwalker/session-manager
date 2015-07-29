@@ -51,6 +51,12 @@ public interface CacheEngine {
     public void put(String key, Object value);
 
     /**
+     * delete key
+     * @param key
+     */
+    public void del(String key);
+
+    /**
      * 更新缓存中指定key的值
      * @param key 缓存key.
      * @param value 缓存的值.

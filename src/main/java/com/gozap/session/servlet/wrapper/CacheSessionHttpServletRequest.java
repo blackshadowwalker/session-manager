@@ -45,6 +45,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
     private String cookieDomain;
     private String cookieContextPath;
     private String sessionCacheKeyPrefix;
+    private boolean tldEnable = false;
     private HttpServletResponse response;
     private HttpSessionAttributeListener[] sessionAttributeListeners;
     private HttpSessionListener[] sessionListeners;
@@ -64,6 +65,10 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
         this.context = context;
         this.response = response;
         this.cache = (CacheEngine) context.getAttribute(CacheEngineLoadListener.CACHE_USE_HOST_DOMAIN_KEY);
+    }
+
+    public void setTldEnable(boolean tldEnable) {
+        this.tldEnable = tldEnable;
     }
 
     /**
@@ -261,6 +266,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
                     getSessionCookieName(),
                     sessionId,
                     getCookieDomain(),
+                    tldEnable,
                     getCookieContextPath(),
                     COOKIE_TIMELIVE);
         }
@@ -280,9 +286,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
             while (cache.containsKey(sessionId)) {
                 sessionId = IdGenerate.getUUIDString();
             }
-            CacheHttpSession session = buildCacheHttpSession(
-                    sessionId,
-                    true);
+            CacheHttpSession session = buildCacheHttpSession(sessionId, true);
             LOGGER.debug("Build new session[{"+session.getId()+"}].");
             return session;
         } else {

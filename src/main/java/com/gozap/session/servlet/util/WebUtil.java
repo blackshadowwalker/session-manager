@@ -1,6 +1,8 @@
 package com.gozap.session.servlet.util;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -95,12 +97,17 @@ public class WebUtil {
 	 *            Cookie名称 。
 	 * @param value
 	 *            Cookie的值。
+	 * #@param tldEnable
+     *          top level domain enable
 	 * @param maxAge
 	 *            生命周期。
 	 */
-	public static void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value,
+    public static void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value, int maxAge) {
+        addCookie(request, response, name, value, null, false, maxAge);
+    }
+	public static void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value, boolean tldEnable,
 			int maxAge) {
-		addCookie(request, response, name, value, null, maxAge);
+		addCookie(request, response, name, value, null, tldEnable, maxAge);
 	}
 
 	/**
@@ -118,12 +125,12 @@ public class WebUtil {
 	 *            生命周期。
 	 */
 	public static void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value,
-			String domain, int maxAge) {
+			String domain, boolean tldEnable, int maxAge) {
 		String contextPath = request.getContextPath();
 		if (contextPath == null || contextPath.isEmpty()) {
 			contextPath = "/";
 		}
-		addCookie(request, response, name, value, domain, contextPath, maxAge);
+		addCookie(request, response, name, value, domain, tldEnable, contextPath, maxAge);
 	}
 
 	/**
@@ -145,7 +152,7 @@ public class WebUtil {
 	 *            有效时间。
 	 */
 	public static void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value,
-			String domain, String contextPath, int maxAge) {
+			String domain, boolean tldEnable,  String contextPath, int maxAge) {
 		if (request != null && response != null) {
 			Cookie cookie = new Cookie(name, value);
 			cookie.setMaxAge(maxAge);
@@ -159,15 +166,69 @@ public class WebUtil {
 			}
 
 			if (domain != null && !domain.isEmpty()) {
-				cookie.setDomain(domain);
-			}
-
+                if(tldEnable){
+                    cookie.setDomain(getTopLevelDomain(domain));
+                }else {
+                    cookie.setDomain(domain);
+                }
+			}else{
+                if(tldEnable){
+                    cookie.setDomain(getTopLevelDomain(request.getRequestURL().toString()));
+                }
+            }
 			response.addCookie(cookie);
-
 			LOGGER.debug(String.format("Cookie update the sessionID.[name={%s},value={%s},maxAge={%s},secure={%s},path={%s},domain={%s}]",cookie.getName(), cookie.getValue(), String.valueOf(cookie.getMaxAge()),
 							String.valueOf(cookie.getSecure()), cookie.getPath(), cookie.getDomain()));
 		}
 	}
+
+    //获取顶级域名
+    public static String getTopLevelDomain(String url){
+        try {
+            URL ul = new URL(url);
+            String host = ul.getHost().trim();
+            String ipReg = "(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)";
+            Matcher ipM = Pattern.compile(ipReg).matcher(host);
+            if (ipM.matches()) {
+                return host;
+            }
+            String reg = ".*\\.(\\w+\\.\\w+)$";
+            Pattern p = Pattern.compile(reg);
+            Matcher m = p.matcher(host);
+            if (m.matches()) {
+                String baseDomain = m.group(1);
+                return baseDomain;
+            }
+            return host;
+        }catch (MalformedURLException e1){
+            if (url.indexOf("http") < 0) {
+                url = "http://" + url;
+                return getTopLevelDomain(url);
+            }else{
+                return getHost(url);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return getHost(url);
+    }
+
+    public static String getHost(String url){
+        try{
+            URL ul = new URL(url);
+            return ul.getHost();
+        }catch (MalformedURLException e1){
+            if (url.indexOf("http") < 0) {
+                url = "http://" + url;
+                return getHost(url);
+            }else{
+                return null;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 	/**
 	 * 失效一个Cookie.
@@ -184,9 +245,9 @@ public class WebUtil {
 	 *            有效路径。
 	 */
 	public static void setCookieNull(HttpServletRequest request, HttpServletResponse response, String name,
-                                     String domain, String contextPath) {
+                                     String domain, boolean tldEnable, String contextPath) {
 		if (request != null && response != null) {
-			addCookie(request, response, name, null, domain, contextPath, 0);
+			addCookie(request, response, name, null, domain, tldEnable, contextPath, 0);
 		}
 	}
 
@@ -203,12 +264,12 @@ public class WebUtil {
 	 *            cookie的域名。
 	 */
 	public static void setCookieNull(HttpServletRequest request, HttpServletResponse response, String name,
-                                     String domain) {
+                                     String domain, boolean tldEnable) {
 		String contextPath = request.getContextPath();
 		if (contextPath == null || contextPath.isEmpty()) {
 			contextPath = "/";
 		}
-		setCookieNull(request, response, name, domain, contextPath);
+		setCookieNull(request, response, name, domain, tldEnable, contextPath);
 	}
 
 	/**
@@ -221,8 +282,8 @@ public class WebUtil {
 	 * @param name
 	 *            cookie名称。
 	 */
-	public static void setCookieNull(HttpServletRequest request, HttpServletResponse response, String name) {
-		setCookieNull(request, response, name, null);
+	public static void setCookieNull(HttpServletRequest request, HttpServletResponse response, String name, boolean tldEnable) {
+		setCookieNull(request, response, name, null, tldEnable);
 	}
 
 	/**
