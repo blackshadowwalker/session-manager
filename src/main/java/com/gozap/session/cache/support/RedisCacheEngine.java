@@ -139,12 +139,24 @@ public class RedisCacheEngine extends AbstractCacheEngine {
 
     @Override
     public long increase(String key, long magnitude) {
-        throw new UnsupportedOperationException("not implement yet");
+        checkInit();
+        checkKey(key);
+        Jedis jedis = null;
+        jedis = jedisPool.getResource();
+        Long value = jedis.incrBy(key, magnitude);
+        jedis.close();
+        return value;
     }
 
     @Override
     public long decrease(String key, long magnitude) {
-        throw new UnsupportedOperationException("not implement yet");
+        checkInit();
+        checkKey(key);
+        Jedis jedis = null;
+        jedis = jedisPool.getResource();
+        Long value = jedis.decrBy(key, magnitude);
+        jedis.close();
+        return value;
     }
 
     @Override
