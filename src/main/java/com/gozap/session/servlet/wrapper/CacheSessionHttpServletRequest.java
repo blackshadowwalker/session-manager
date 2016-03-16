@@ -46,6 +46,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
     private String cookieContextPath;
     private String sessionCacheKeyPrefix;
     private boolean tldEnable = false;
+    private boolean synRealTime = false;
     private HttpServletResponse response;
     private HttpSessionAttributeListener[] sessionAttributeListeners;
     private HttpSessionListener[] sessionListeners;
@@ -69,6 +70,10 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
 
     public void setTldEnable(boolean tldEnable) {
         this.tldEnable = tldEnable;
+    }
+
+    public void setSynRealTime(boolean synRealTime) {
+        this.synRealTime = synRealTime;
     }
 
     /**
@@ -257,6 +262,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
         session.setMaxInactiveInterval(maxInactiveInterval);
         session.setSessionAttributeListeners(sessionAttributeListeners);
         session.setSessionListeners(sessionListeners);
+        session.setSynRealTime(synRealTime);
         session.init();
 
         if (cookie) {

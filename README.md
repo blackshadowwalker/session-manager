@@ -34,6 +34,7 @@ public class CacheListener extends CacheEngineLoadListener {
 
 |Parameter|Required|type|Default value|description|
 |----|----|----|----|----|
+|synRealTime       | false | int | true/false | if true syn attr at set/remove(Attribute), or syn attr after chain.doFilter|
 |maxInactiveInterval | false | int | 28800 | session expired time in second |
 |cookieDomain      | false | string | sub domain| set cookie domain |
 |tldEnable         | false | boolean| false     | set cookie use top level domain |
@@ -56,6 +57,11 @@ config web.xml
         <description>session expired time in second</description>
         <param-name>maxInactiveInterval</param-name>
         <param-value>3600</param-value>
+    </init-param>
+    <init-param>
+            <description>if true syn attr at set/remove(Attribute), or syn attr after chain.doFilter</description>
+            <param-name>synRealTime</param-name>
+            <param-value>true</param-value>
     </init-param>
     <init-param>
         <description>session prefix int redis</description>
