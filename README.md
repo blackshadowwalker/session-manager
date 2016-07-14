@@ -16,7 +16,7 @@ public class CacheListener extends CacheEngineLoadListener {
     @Override
     public void contextInitialized(ServletContextEvent event) {
         ServletContext servletContext = event.getServletContext();
-        this.ctx = WebApplicationContextUtils.getWebApplicationContext(servletContext);//get spring ctx
+        this.ctx = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext);//get spring ctx
         JedisPool jedisPool = this.ctx.getBean(JedisPool.class);//get jedisPool with spring
         log.info(jedisPool);
         servletContext.setAttribute(RedisCacheEngine.JEDIS_POOL, jedisPool);
