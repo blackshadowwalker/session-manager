@@ -59,6 +59,7 @@ public class CacheHttpSession implements HttpSession {
     private CacheSessionAttribute sessionAttribute;
     // session是否合法标示
     private boolean invalid = false;
+    private boolean synRealTime = false;
     //是否需同步缓存（只有改变Session中的键值对才会进行同步）
     private boolean update = false;
     private HttpSessionAttributeListener[] sessionAttributeListeners;
@@ -132,6 +133,9 @@ public class CacheHttpSession implements HttpSession {
      */
     public void access() {
         sessionHeader.setLastAccessTime(Calendar.getInstance().getTimeInMillis());
+        if (synRealTime) {
+            synchronizationCache();
+        }
     }
 
     /**
@@ -164,6 +168,10 @@ public class CacheHttpSession implements HttpSession {
 
     public void setSessionCacheKeyPrefix(String sessionCacheKeyPrefix) {
         this.sessionCacheKeyPrefix = sessionCacheKeyPrefix;
+    }
+
+    public void setSynRealTime(boolean synRealTime) {
+        this.synRealTime = synRealTime;
     }
 
     /**
@@ -210,6 +218,9 @@ public class CacheHttpSession implements HttpSession {
             doHttpSessionAttributeListener(attributeName, oldValue,
                     AccessType.REPLACE_ATTRIBUTE);
         }
+        if (synRealTime) {
+            synchronizationCache();
+        }
     }
 
     /**
@@ -226,6 +237,9 @@ public class CacheHttpSession implements HttpSession {
 
         doHttpSessionAttributeListener(attributeName, value,
                 AccessType.REMOVE_ATTRIBUTE);
+        if (synRealTime) {
+            synchronizationCache();
+        };
     }
 
     /**
@@ -237,6 +251,9 @@ public class CacheHttpSession implements HttpSession {
         cache.del(this.sessionCacheKeyHeader);
         cache.del(this.sessionCacheKeyAttribute);
         invalid = true;
+        if (synRealTime) {
+            synchronizationCache();
+        }
     }
 
     /**
@@ -434,6 +451,9 @@ public class CacheHttpSession implements HttpSession {
             update = false;
         }
         doHttpSessionListener(AccessType.SET_ATTRIBUTE);
+        if (synRealTime) {
+            synchronizationCache();
+        }
     }
 
     /**

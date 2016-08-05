@@ -165,16 +165,15 @@ public class WebUtil {
 				cookie.setPath(contextPath);
 			}
 
-			if (domain != null && !domain.isEmpty()) {
-                if(tldEnable){
-                    cookie.setDomain(getTopLevelDomain(domain));
-                }else {
-                    cookie.setDomain(domain);
-                }
-			}else{
-                if(tldEnable){
-                    cookie.setDomain(getTopLevelDomain(request.getRequestURL().toString()));
-                }
+            String host = getHost(request.getRequestURL().toString());
+            String d = domain;
+			if (domain != null && !domain.isEmpty() && tldEnable) {
+                d = getTopLevelDomain(domain);
+			}else if(tldEnable){
+                d = getTopLevelDomain(request.getRequestURL().toString());
+            }
+            if(d!=null && host!=null && !d.equalsIgnoreCase(host)) {
+                cookie.setDomain(d);
             }
 			response.addCookie(cookie);
 			LOGGER.debug(String.format("Cookie update the sessionID.[name={%s},value={%s},maxAge={%s},secure={%s},path={%s},domain={%s}]",cookie.getName(), cookie.getValue(), String.valueOf(cookie.getMaxAge()),

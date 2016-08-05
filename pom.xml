@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.gozap.session</groupId>
 	<artifactId>session-manager</artifactId>
-	<version>1.0.1</version>
+	<version>1.1.0</version>
 	
 	<properties>
 		<logback.version>1.1.2</logback.version>
@@ -67,26 +67,31 @@
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+            <scope>compile</scope>
             <version>1.1.1</version>
         </dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
 			<version>3.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
-			<version>2.6.3</version>
+            <scope>compile</scope>
+            <version>2.6.3</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
-			<version>1.8.3</version>
+            <scope>compile</scope>
+            <version>1.8.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
+            <scope>compile</scope>
 			<version>1.1.37</version>
 		</dependency>
 	</dependencies>

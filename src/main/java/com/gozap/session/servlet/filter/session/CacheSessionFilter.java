@@ -48,6 +48,7 @@ public class CacheSessionFilter extends BaseFilter {
     public static final String COOKIE_DOMAIN = "cookieDomain";
     public static final String COOKIE_CONTEXT_PATH = "cookieContextPath";
     public static final String TOP_LEVEL_DOMAIN_ENABLE = "tldEnable";
+    public static final String SYN_ATTR_REAL_TIME = "synRealTime";
 
     public static String DEFAULT_SESSION_ID_NAME = "SESSIONID";
     public static String DEFAULT_SESSION_CACHE_KEY_PREFIX = "session";
@@ -55,6 +56,7 @@ public class CacheSessionFilter extends BaseFilter {
     private String sessionCookieName = null;
     private String cookieDomain = null;
     private boolean tldEnable = false; // use top level domain for cookie
+    private boolean synRealTime = false; //if true syn attr at set/get attr, or syn attr after chain.doFilter
     private String cookieContextPath = null;
     /**
      * session过期时间, 单位为秒
@@ -120,13 +122,14 @@ public class CacheSessionFilter extends BaseFilter {
                 httpResponse,
                 filterConfig.getServletContext());
         cacheRequest.setSessionCookieName(sessionCookieName);
-        cacheRequest.setMaxInactiveInterval(maxInactiveInterval);
+        cacheRequest.setMaxInactiveInterval(maxInactiveInterval);// ((HttpServletRequest) request).getSession().getMaxInactiveInterval();
         cacheRequest.setCookieDomain(cookieDomain);
         cacheRequest.setCookieContextPath(cookieContextPath);
         cacheRequest.setSessionCacheKeyPrefix(sessionCacheKeyPrefix);
         cacheRequest.setSessionAttributeListeners(sessionAttributeListeners);
         cacheRequest.setSessionListeners(sessionListeners);
         cacheRequest.setTldEnable(tldEnable);
+        cacheRequest.setSynRealTime(synRealTime);
 
         chain.doFilter(cacheRequest, httpResponse);
 
@@ -171,6 +174,9 @@ public class CacheSessionFilter extends BaseFilter {
 
         temp = filterConfig.getInitParameter(TOP_LEVEL_DOMAIN_ENABLE);
         tldEnable = (temp!=null && temp.trim().equalsIgnoreCase("true"))? true : false;
+
+        temp = filterConfig.getInitParameter(SYN_ATTR_REAL_TIME);
+        synRealTime = (temp!=null && temp.trim().equalsIgnoreCase("true"))? true : false;
 
         LOGGER.info("CacheSessionFilter (sessionCookieName={"+sessionCookieName+"}, maxInactiveInterval={"+maxInactiveInterval+"}, " +
                         "cookieDomain={"+cookieDomain+"}, sessionCacheKeyPrefix={"+sessionCacheKeyPrefix+"})");
