@@ -57,19 +57,39 @@ public class WebUtil {
 	 *            cookie名称。
 	 * @return 如果有相应名称的Cookie，则返回相应Cookie实例。没有返回null。
 	 */
-	public static Cookie findCookie(HttpServletRequest request, String name) {
-		if (request != null) {
-			Cookie[] cookies = request.getCookies();
-			if (cookies != null && cookies.length > 0) {
-				for (Cookie cookie : cookies) {
-					if (cookie.getName().equals(name)) {
-						return cookie;
-					}
-				}
+	public static Cookie findLastCookie(HttpServletRequest request, String name) {
+		Cookie c = null;
+		if (request == null) {
+			return null;
+		}
+		Cookie[] cookies = request.getCookies();
+		if (cookies == null || cookies.length <1) {
+			return null;
+		}
+		for (Cookie cookie : cookies) {
+			if (cookie.getName().equals(name)) {
+				c = cookie;
 			}
 		}
+		return c;
+	}
 
-		return null;
+	public static Cookie findFirstCookie(HttpServletRequest request, String name) {
+		Cookie c = null;
+		if (request == null) {
+			return null;
+		}
+		Cookie[] cookies = request.getCookies();
+		if (cookies == null || cookies.length <1) {
+			return null;
+		}
+		for (Cookie cookie : cookies) {
+			if (cookie.getName().equals(name)) {
+				c = cookie;
+				break;
+			}
+		}
+		return c;
 	}
 
 	/**
@@ -82,7 +102,7 @@ public class WebUtil {
 	 * @return cookie的值。
 	 */
 	public static String findCookieValue(HttpServletRequest request, String name) {
-		Cookie cookie = findCookie(request, name);
+		Cookie cookie = findLastCookie(request, name);
 		return cookie != null ? cookie.getValue() : null;
 	}
 

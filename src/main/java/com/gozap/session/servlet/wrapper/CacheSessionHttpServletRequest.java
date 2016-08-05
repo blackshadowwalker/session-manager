@@ -226,7 +226,7 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
             //本地已经有对象，直接返回。
             LOGGER.debug("Session[{"+cacheSession.getId()+"}] was existed.");
         } else {
-            Cookie cookie = WebUtil.findCookie(this, getSessionCookieName());
+            Cookie cookie = WebUtil.findLastCookie(this, getSessionCookieName());
             if (cookie != null) {
                 LOGGER.debug("Find session`s id from cookie.[{"+cookie.getValue()+"}]");
                 cacheSession = buildCacheHttpSession(cookie.getValue(), false);
@@ -298,5 +298,10 @@ public class CacheSessionHttpServletRequest extends HttpServletRequestWrapper {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public String getRequestedSessionId() {
+        return WebUtil.findCookieValue(this, getSessionCookieName());
     }
 }
